@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:pcea_church/screen/welcome.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({Key? key}) : super(key: key);
@@ -217,12 +216,7 @@ class _StartScreenState extends State<StartScreen>
               left: 20,
               child: TextButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WelcomeScreen(),
-                    ),
-                  );
+                  Navigator.pushReplacementNamed(context, '/welcome');
                 },
                 child: const Text(
                   "Skip",
@@ -253,12 +247,7 @@ class _StartScreenState extends State<StartScreen>
                   elevation: 6,
                 ),
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WelcomeScreen(),
-                    ),
-                  );
+                  Navigator.pushReplacementNamed(context, '/welcome');
                 },
                 child: const Text(
                   "Join Our Faith Journey",

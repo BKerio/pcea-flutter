@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:pcea_church/screen/member_onboard.dart';
-import 'package:pcea_church/screen/staff_role.dart';
+import '../services/auth_service.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  /// Check if user is already authenticated
+  void _checkAuthStatus() async {
+    final authService = AuthService();
+    if (authService.isAuthenticated) {
+      // User is already logged in, navigate to staff roles
+      Navigator.of(context).pushReplacementNamed('/staff-roles');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,17 +84,12 @@ class WelcomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LandingScreen(),
-                          ),
-                        );
+                        Navigator.pushNamed(context, '/login');
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(15.0),
                         child: Text(
-                          "Select Role to Login",
+                          "Login",
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
@@ -97,12 +111,7 @@ class WelcomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
-                          ),
-                        );
+                        Navigator.pushNamed(context, '/register');
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(15.0),

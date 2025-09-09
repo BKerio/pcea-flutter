@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:pcea_church/screen/staff_role.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -36,44 +34,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       try {
-        final response = await http.post(
-          Uri.parse('http://your-api-url.com/clients/register.php'),
-          body: {
-            'username': _usernameController.text,
-            'email': _emailController.text,
-            'company': _companyController.text,
-            'password': _passwordController.text,
-            'phone': '$_selectedCountryCode${_phoneController.text}',
-          },
+        final authService = AuthService();
+        
+        // Create password confirmation (using same password for now)
+        final result = await authService.register(
+          name: _usernameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          passwordConfirmation: _passwordController.text,
         );
 
-        final data = json.decode(response.body);
-
-        if (data['success']) {
+        if (result.success) {
+          // Registration successful
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Registration successful!',
+            const SnackBar(
+              content: Text(
+                'Registration successful! You are now logged in.',
                 style: TextStyle(
                   fontWeight: FontWeight.normal,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
               ),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const LandingScreen()),
+          
+          // Navigate to staff roles screen
+          Navigator.pushNamedAndRemoveUntil(
+            context, 
+            '/staff-roles',
+            (route) => false,
           );
         } else {
+          // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                data['message'],
+                result.firstError,
                 style: const TextStyle(
                   fontWeight: FontWeight.normal,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
               ),
               backgroundColor: Colors.red,
@@ -82,12 +82,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Something Went Wrong, Not your Fault!',
-              style: TextStyle(
+              'Registration failed: ${error.toString()}',
+              style: const TextStyle(
                 fontWeight: FontWeight.normal,
-                color: Colors.black,
+                color: Colors.white,
               ),
             ),
             backgroundColor: Colors.red,
