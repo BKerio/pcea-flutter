@@ -177,15 +177,48 @@ class AuthService {
   /// Handle successful authentication response
   Future<void> _handleSuccessfulAuth(ApiResponse response) async {
     if (response.data != null && response.data['user'] != null) {
-      _currentUser = User.fromJson(response.data['user']);
-      _isAuthenticated = true;
-      
-      // Notify listeners
-      _authStateController.add(_isAuthenticated);
-      _userController.add(_currentUser);
-      
-      // Load profile data
-      await loadProfile();
+      try {
+        _currentUser = User.fromJson(response.data['user']);
+        _isAuthenticated = true;
+        
+        // Notify listeners
+        _authStateController.add(_isAuthenticated);
+        _userController.add(_currentUser);
+        
+        // Load profile data
+        await loadProfile();
+      } catch (e) {
+        print('Error parsing user data: $e');
+        print('User data received: ${response.data['user']}');
+        throw Exception('Failed to parse user data: ${e.toString()}');
+      }
+    }
+  }
+
+  /// Get the appropriate dashboard route for the current user
+  String? get dashboardRoute {
+    if (_currentUser == null) return null;
+    return _currentUser!.dashboardRoute ?? _getDashboardRouteForRole(_currentUser!.role);
+  }
+
+  /// Get dashboard route based on role
+  String _getDashboardRouteForRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'chair':
+        return '/chair/dashboard';
+      case 'pastor':
+        return '/pastor/dashboard';
+      case 'church_elder':
+        return '/elder/dashboard';
+      case 'deacon':
+        return '/deacon/dashboard';
+      case 'group_leader':
+        return '/leader/dashboard';
+      case 'member':
+      default:
+        return '/member/dashboard';
     }
   }
 
@@ -195,15 +228,21 @@ class AuthService {
       // Get basic user info
       final userResponse = await ApiService.getUser();
       if (userResponse.isSuccess && userResponse.data != null) {
-        _currentUser = User.fromJson(userResponse.data['user']);
-        _isAuthenticated = true;
-        
-        // Notify listeners
-        _authStateController.add(_isAuthenticated);
-        _userController.add(_currentUser);
-        
-        // Load profile data
-        await loadProfile();
+        try {
+          _currentUser = User.fromJson(userResponse.data['user']);
+          _isAuthenticated = true;
+          
+          // Notify listeners
+          _authStateController.add(_isAuthenticated);
+          _userController.add(_currentUser);
+          
+          // Load profile data
+          await loadProfile();
+        } catch (parseError) {
+          print('Error parsing user data in _loadUserData: $parseError');
+          print('User data: ${userResponse.data['user']}');
+          await _clearAuthState();
+        }
       } else {
         await _clearAuthState();
       }

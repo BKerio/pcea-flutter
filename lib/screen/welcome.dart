@@ -19,8 +19,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void _checkAuthStatus() async {
     final authService = AuthService();
     if (authService.isAuthenticated) {
-      // User is already logged in, navigate to staff roles
-      Navigator.of(context).pushReplacementNamed('/staff-roles');
+      // User is already logged in, navigate to their role-specific dashboard
+      final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
+      Navigator.of(context).pushReplacementNamed(dashboardRoute);
     }
   }
 

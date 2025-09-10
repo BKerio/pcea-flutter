@@ -109,9 +109,15 @@ class ApiService {
           await TokenManager.saveToken(data['access_token']);
         }
         if (data['user'] != null) {
-          final user = User.fromJson(data['user']);
-          await TokenManager.saveUserId(user.id);
-          await TokenManager.saveUserEmail(user.email);
+          try {
+            final user = User.fromJson(data['user']);
+            await TokenManager.saveUserId(user.id);
+            await TokenManager.saveUserEmail(user.email);
+          } catch (e) {
+            print('Error parsing user data in registration: $e');
+            print('User data: ${data['user']}');
+            // Don't fail the entire registration, but log the error
+          }
         }
       }
 
@@ -145,9 +151,15 @@ class ApiService {
           await TokenManager.saveToken(data['access_token']);
         }
         if (data['user'] != null) {
-          final user = User.fromJson(data['user']);
-          await TokenManager.saveUserId(user.id);
-          await TokenManager.saveUserEmail(user.email);
+          try {
+            final user = User.fromJson(data['user']);
+            await TokenManager.saveUserId(user.id);
+            await TokenManager.saveUserEmail(user.email);
+          } catch (e) {
+            print('Error parsing user data in login: $e');
+            print('User data: ${data['user']}');
+            // Don't fail the entire login, but log the error
+          }
         }
       }
 

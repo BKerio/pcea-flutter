@@ -8,6 +8,13 @@ import 'services/app_config_service.dart';
 import 'services/api_service.dart';
 import 'screens/auth_screens.dart';
 import 'screen/staff_role.dart';
+import 'dashboards/admin_dashboard.dart';
+import 'dashboards/chair_dashboard.dart';
+import 'dashboards/pastor_dashboard.dart';
+import 'dashboards/elder_dashboard.dart';
+import 'dashboards/deacon_dashboard.dart';
+import 'dashboards/group_leader_dashboard.dart';
+import 'dashboards/member_dashboard.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -92,6 +99,14 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/staff-roles': (context) => const LandingScreen(),
         '/home': (context) => const LandingScreen(), // Alias for staff-roles
+        // Role-based dashboards
+        '/admin/dashboard': (context) => const AdminDashboard(),
+        '/chair/dashboard': (context) => const ChairDashboard(),
+        '/pastor/dashboard': (context) => const PastorDashboard(),
+        '/elder/dashboard': (context) => const ElderDashboard(),
+        '/deacon/dashboard': (context) => const DeaconDashboard(),
+        '/leader/dashboard': (context) => const GroupLeaderDashboard(),
+        '/member/dashboard': (context) => const MemberDashboard(),
       },
     );
   }
@@ -136,9 +151,10 @@ class _AppInitializerState extends State<AppInitializer> {
       final authService = AuthService();
       
       if (authService.isAuthenticated) {
-        // User is logged in, go to staff roles screen
+        // User is logged in, navigate to their role-specific dashboard
+        final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/staff-roles');
+          Navigator.of(context).pushReplacementNamed(dashboardRoute);
         }
       } else {
         // User is not logged in, go to welcome

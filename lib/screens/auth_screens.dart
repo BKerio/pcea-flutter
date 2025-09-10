@@ -42,9 +42,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result.success) {
-        // Login successful - navigate to staff roles
+        // Login successful - navigate to role-specific dashboard
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/staff-roles');
+          final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
+          Navigator.of(context).pushReplacementNamed(dashboardRoute);
         }
       } else {
         // Show error message
@@ -304,9 +305,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (result.success) {
-        // Registration successful - navigate to staff roles
+        // Registration successful - navigate to role-specific dashboard
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/staff-roles');
+          final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
+          Navigator.of(context).pushReplacementNamed(dashboardRoute);
         }
       } else {
         // Show error message

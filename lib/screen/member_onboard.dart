@@ -59,10 +59,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
           
-          // Navigate to staff roles screen
+          // Navigate to role-specific dashboard
+          final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
           Navigator.pushNamedAndRemoveUntil(
             context, 
-            '/staff-roles',
+            dashboardRoute,
             (route) => false,
           );
         } else {

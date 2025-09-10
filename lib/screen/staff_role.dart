@@ -83,12 +83,31 @@ class _LandingScreenState extends State<LandingScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    _checkForRoleRedirect();
   }
 
   void _loadUserData() {
     setState(() {
       _currentUser = _authService.currentUser;
     });
+  }
+
+  /// Check if user should be redirected to their role-specific dashboard
+  void _checkForRoleRedirect() {
+    if (_authService.isAuthenticated && _authService.currentUser != null) {
+      final user = _authService.currentUser!;
+      
+      // If user has a specific role and it's not 'member', redirect them
+      if (user.role != 'member') {
+        final dashboardRoute = _authService.dashboardRoute ?? '/member/dashboard';
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, dashboardRoute);
+          }
+        });
+        return;
+      }
+    }
   }
 
   Future<void> _handleLogout() async {

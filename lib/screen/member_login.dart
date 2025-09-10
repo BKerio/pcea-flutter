@@ -41,7 +41,7 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
       );
 
       if (result.success) {
-        // Login successful - navigate to staff roles
+        // Login successful - navigate to role-specific dashboard
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -52,9 +52,14 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
               backgroundColor: Colors.green,
             ),
           );
+          
+          // Give a small delay to ensure user data is fully loaded
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/staff-roles',
+            dashboardRoute,
             (route) => false,
           );
         }
