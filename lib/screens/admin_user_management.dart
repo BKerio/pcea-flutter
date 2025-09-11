@@ -4,6 +4,7 @@ import '../services/role_management_service.dart';
 import '../services/user_service.dart';
 import '../widgets/role_management/role_assignment_dialog.dart';
 import '../widgets/role_management/bulk_role_assignment_dialog.dart';
+import 'role_history_screen.dart';
 
 class AdminUserManagement extends StatefulWidget {
   const AdminUserManagement({Key? key}) : super(key: key);
@@ -405,19 +406,22 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
   }
 
   void _showUserRoleHistory(User user) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${user.name} - Role History'),
-        content: const Text('Role history feature coming soon...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+    try {
+      // Navigate to the role history screen
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => RoleHistoryScreen(user: user),
+        ),
+      );
+    } catch (e) {
+      print('Error navigating to role history: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open role history: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showBulkAssignmentDialog() async {
