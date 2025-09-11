@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../services/role_management_service.dart';
 import '../services/user_service.dart';
 import '../widgets/role_management/role_assignment_dialog.dart';
+import '../widgets/role_management/bulk_role_assignment_dialog.dart';
 
 class AdminUserManagement extends StatefulWidget {
   const AdminUserManagement({Key? key}) : super(key: key);
@@ -164,7 +165,17 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Management'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('User Management'),
+            if (_users.isNotEmpty)
+              Text(
+                '${_filteredUsers.length} of ${_users.length} users',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              ),
+          ],
+        ),
         elevation: 0,
         actions: [
           IconButton(
@@ -258,11 +269,14 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showBulkAssignmentDialog,
-        icon: const Icon(Icons.group_add),
-        label: const Text('Bulk Assign'),
-      ),
+      floatingActionButton: _filteredUsers.isEmpty 
+          ? null 
+          : FloatingActionButton.extended(
+              onPressed: _showBulkAssignmentDialog,
+              icon: const Icon(Icons.group_add),
+              label: Text('Bulk Assign (${_filteredUsers.length})'),
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
     );
   }
 
@@ -406,20 +420,55 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
     );
   }
 
-  void _showBulkAssignmentDialog() {
-    showDialog(
+  void _showBulkAssignmentDialog() async {
+    if (_availableRoles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No roles available'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_users.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No users available for bulk assignment'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final result = await showDialog<List<User>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Bulk Role Assignment'),
-        content: const Text('Bulk role assignment feature coming soon...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+      builder: (context) => BulkRoleAssignmentDialog(
+        users: _filteredUsers.isNotEmpty ? _filteredUsers : _users,
+        availableRoles: _availableRoles,
       ),
     );
+
+    if (result != null && result.isNotEmpty) {
+      // Update the users in the list
+      setState(() {
+        for (final updatedUser in result) {
+          final index = _users.indexWhere((u) => u.id == updatedUser.id);
+          if (index != -1) {
+            _users[index] = updatedUser;
+          }
+        }
+      });
+      _filterUsers();
+
+      // Show summary message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully updated ${result.length} user role(s)'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Color _getRoleColor(String role) {
