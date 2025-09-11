@@ -128,9 +128,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     title: 'User Management',
                     color: Colors.blue,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User Management feature coming soon!')),
-                      );
+                      Navigator.pushNamed(context, '/admin/user-management');
                     },
                   ),
                   _buildDashboardCard(
@@ -138,9 +136,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     title: 'Role Management',
                     color: Colors.red,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Role Management feature coming soon!')),
-                      );
+                      Navigator.pushNamed(context, '/admin/user-management');
                     },
                   ),
                   _buildDashboardCard(

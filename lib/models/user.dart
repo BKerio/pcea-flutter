@@ -26,15 +26,18 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     // Safely extract role information with defaults
     final roleValue = json['role'];
-    final roleDisplayValue = json['role_display'];
+    
+    // Handle both snake_case and camelCase for compatibility
+    final roleDisplayValue = json['roleDisplay'] ?? json['role_display'];
+    final dashboardRouteValue = json['dashboardRoute'] ?? json['dashboard_route'];
     
     return User(
       id: json['id'] as int,
       name: json['name'] as String,
       email: json['email'] as String,
       role: roleValue != null ? roleValue.toString() : 'member',
-      roleDisplay: roleDisplayValue != null ? roleDisplayValue.toString() : 'Member',
-      dashboardRoute: json['dashboard_route']?.toString(),
+      roleDisplay: roleDisplayValue != null ? roleDisplayValue.toString() : _getRoleDisplayFromRole(roleValue?.toString() ?? 'member'),
+      dashboardRoute: dashboardRouteValue?.toString() ?? _getDashboardRouteFromRole(roleValue?.toString() ?? 'member'),
       emailVerifiedAt: json['email_verified_at'] != null
           ? DateTime.parse(json['email_verified_at'])
           : null,
@@ -45,6 +48,52 @@ class User {
           ? DateTime.parse(json['updated_at']) 
           : null,
     );
+  }
+
+  /// Helper method to get role display name from role
+  static String _getRoleDisplayFromRole(String role) {
+    switch (role) {
+      case 'admin':
+        return 'Administrator';
+      case 'chair':
+        return 'Church Chair';
+      case 'pastor':
+        return 'Pastor';
+      case 'church_elder':
+        return 'Church Elder';
+      case 'deacon':
+        return 'Deacon';
+      case 'group_leader':
+        return 'Group Leader';
+      case 'member':
+        return 'Member';
+      default:
+        return role.replaceAll('_', ' ').split(' ').map((word) => 
+            word.isEmpty ? word : word[0].toUpperCase() + word.substring(1)
+        ).join(' ');
+    }
+  }
+
+  /// Helper method to get dashboard route from role
+  static String _getDashboardRouteFromRole(String role) {
+    switch (role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'chair':
+        return '/chair/dashboard';
+      case 'pastor':
+        return '/pastor/dashboard';
+      case 'church_elder':
+        return '/elder/dashboard';
+      case 'deacon':
+        return '/deacon/dashboard';
+      case 'group_leader':
+        return '/leader/dashboard';
+      case 'member':
+        return '/member/dashboard';
+      default:
+        return '/member/dashboard';
+    }
   }
 
   /// Convert User to JSON

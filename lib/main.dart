@@ -15,6 +15,7 @@ import 'dashboards/elder_dashboard.dart';
 import 'dashboards/deacon_dashboard.dart';
 import 'dashboards/group_leader_dashboard.dart';
 import 'dashboards/member_dashboard.dart';
+import 'screens/admin_user_management.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -107,6 +108,8 @@ class MyApp extends StatelessWidget {
         '/deacon/dashboard': (context) => const DeaconDashboard(),
         '/leader/dashboard': (context) => const GroupLeaderDashboard(),
         '/member/dashboard': (context) => const MemberDashboard(),
+        // Admin management screens
+        '/admin/user-management': (context) => const AdminUserManagement(),
       },
     );
   }
