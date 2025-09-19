@@ -31,10 +31,13 @@ class User {
     final roleDisplayValue = json['roleDisplay'] ?? json['role_display'];
     final dashboardRouteValue = json['dashboardRoute'] ?? json['dashboard_route'];
     
+    // Handle both 'name' and 'full_name' fields for compatibility
+    final nameValue = json['name'] ?? json['full_name'];
+    
     return User(
       id: json['id'] as int,
-      name: json['name'] as String,
-      email: json['email'] as String,
+      name: nameValue?.toString() ?? 'Unknown',
+      email: json['email']?.toString() ?? '',
       role: roleValue != null ? roleValue.toString() : 'member',
       roleDisplay: roleDisplayValue != null ? roleDisplayValue.toString() : _getRoleDisplayFromRole(roleValue?.toString() ?? 'member'),
       dashboardRoute: dashboardRouteValue?.toString() ?? _getDashboardRouteFromRole(roleValue?.toString() ?? 'member'),

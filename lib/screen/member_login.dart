@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/member_service.dart';
 
 class MemberLoginScreen extends StatefulWidget {
   const MemberLoginScreen({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class MemberLoginScreen extends StatefulWidget {
 
 class _MemberLoginScreenState extends State<MemberLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   
   bool _isLoading = false;
@@ -19,7 +20,7 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,8 +36,8 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
 
     try {
       final authService = AuthService();
-      final result = await authService.login(
-        email: _emailController.text.trim(),
+      final result = await authService.memberLogin(
+        identifier: _identifierController.text.trim(),
         password: _passwordController.text,
       );
 
@@ -53,15 +54,17 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
             ),
           );
           
-          // Give a small delay to ensure user data is fully loaded
-          await Future.delayed(const Duration(milliseconds: 100));
+          // Give time to ensure user data is fully loaded
+          await Future.delayed(const Duration(milliseconds: 500));
           
           final dashboardRoute = authService.dashboardRoute ?? '/member/dashboard';
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            dashboardRoute,
-            (route) => false,
-          );
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              dashboardRoute,
+              (route) => false,
+            );
+          }
         }
       } else {
         // Show error message
@@ -158,25 +161,22 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Email field
+                  // Identifier field (National ID or E-Kanisa number)
                   TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _identifierController,
+                    keyboardType: TextInputType.text,
                     textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.characters,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email address',
-                      prefixIcon: Icon(Icons.email),
+                      labelText: 'National ID or E-Kanisa Number',
+                      hintText: 'Enter your National ID or E-Kanisa number',
+                      prefixIcon: Icon(Icons.badge),
                       border: OutlineInputBorder(),
+                      helperText: 'You can use either your National ID or E-Kanisa number',
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email is required';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
+                      final error = MemberService.validateIdentifier(value ?? '');
+                      return error;
                     },
                   ),
                   const SizedBox(height: 16),

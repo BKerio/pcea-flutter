@@ -6,8 +6,9 @@ import 'screen/welcome.dart';
 import 'services/auth_service.dart';
 import 'services/app_config_service.dart';
 import 'services/api_service.dart';
-import 'screens/auth_screens.dart';
 import 'screen/staff_role.dart';
+import 'screen/member_login.dart';
+import 'screen/member_registration.dart';
 import 'dashboards/admin_dashboard.dart';
 import 'dashboards/chair_dashboard.dart';
 import 'dashboards/pastor_dashboard.dart';
@@ -96,8 +97,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
+        '/login': (context) => const MemberLoginScreen(),
+        '/register': (context) => const MemberRegistrationScreen(),
+        '/member/login': (context) => const MemberLoginScreen(),
+        '/member/register': (context) => const MemberRegistrationScreen(),
         '/staff-roles': (context) => const LandingScreen(),
         '/home': (context) => const LandingScreen(), // Alias for staff-roles
         // Role-based dashboards

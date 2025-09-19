@@ -2,8 +2,10 @@ import 'dart:async';
 import '../models/api_response.dart';
 import '../models/user.dart';
 import '../models/user_profile.dart';
+import '../models/member.dart';
 import 'api_service.dart';
 import 'token_manager.dart';
+import 'member_service.dart';
 
 /// Authentication state management service
 class AuthService {
@@ -43,6 +45,207 @@ class AuthService {
     } catch (e) {
       print('Auth initialization error: $e');
       await _clearAuthState();
+    }
+  }
+
+  /// Register a new member
+  Future<AuthResult> registerMember(MemberRegistrationRequest request) async {
+    try {
+      print('🔍 AuthService: Received registration request');
+      print('🔍 AuthService: Full Name = "${request.fullName}"');
+      print('🔍 AuthService: Email = "${request.email}"');
+      print('🔍 AuthService: National ID = "${request.nationalId}"');
+      
+      final response = await ApiService.registerMember(
+        fullName: request.fullName,
+        dateOfBirth: request.dateOfBirth,
+        nationalId: request.nationalId,
+        email: request.email,
+        gender: request.gender,
+        maritalStatus: request.maritalStatus,
+        presbytery: request.presbytery,
+        parish: request.parish,
+        congregation: request.congregation,
+        primarySchool: request.primarySchool,
+        isBaptized: request.isBaptized,
+        takesHolyCommunion: request.takesHolyCommunion,
+        telephone: request.telephone,
+        locationCounty: request.locationCounty,
+        locationSubcounty: request.locationSubcounty,
+        password: request.password,
+        passwordConfirmation: request.passwordConfirmation,
+        dependencies: request.dependencies.map((dep) => dep.toJson()).toList(),
+      );
+
+      print('📦 Registration API Response: Success=${response.isSuccess}, Status=${response.statusCode}');
+      print('📦 Response Message: ${response.message}');
+      if (response.hasErrors) {
+        print('❌ Validation Errors: ${response.errorMessages}');
+      }
+
+      if (response.isSuccess && response.data != null) {
+        // Handle the new consistent backend response format
+        final data = response.data['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          // Extract auth data from consistent response format
+          final token = data['access_token'] as String?;
+          final userData = data['user'] as Map<String, dynamic>?;
+          final dashboardRoute = data['dashboard_route'] as String?;
+          
+          if (token != null && userData != null) {
+            print('✅ Registration successful - Token: ${token.substring(0, 20)}..., Route: $dashboardRoute');
+            
+            // Save the access token
+            await TokenManager.saveToken(token);
+            
+            // Parse and set user data
+            _currentUser = User.fromJson(userData);
+            _isAuthenticated = true;
+            
+            // Notify listeners immediately
+            _authStateController.add(_isAuthenticated);
+            _userController.add(_currentUser);
+            
+            // Load additional profile data in background
+            _loadMemberUserData().then((_) {
+              print('✅ Background member data loaded');
+            }).catchError((error) {
+              print('⚠️ Background load failed but auth is set: $error');
+            });
+            
+            return AuthResult.success('Member registration successful');
+          }
+        }
+        
+        // Handle direct response format (fallback)
+        final token = response.data['access_token'] as String?;
+        final userData = response.data['user'] as Map<String, dynamic>?;
+        
+        if (token != null && userData != null) {
+          print('✅ Registration successful (direct format) - Token: ${token.substring(0, 20)}...');
+          
+          // Save the access token
+          await TokenManager.saveToken(token);
+          
+          // Parse and set user data
+          _currentUser = User.fromJson(userData);
+          _isAuthenticated = true;
+          
+          // Notify listeners immediately
+          _authStateController.add(_isAuthenticated);
+          _userController.add(_currentUser);
+          
+          return AuthResult.success('Member registration successful');
+        }
+        
+        // Fallback to old MemberService handling
+        print('⚠️ Using fallback registration handling');
+        final memberService = MemberService();
+        final result = await memberService.register(request);
+
+        if (result.success) {
+          // Set basic authentication state immediately for navigation
+          _isAuthenticated = true;
+          _currentUser = User(
+            id: 1, // Will be updated when we load real data
+            name: request.fullName,
+            email: request.email,
+            role: 'member',
+            roleDisplay: 'Member',
+            dashboardRoute: '/member/dashboard',
+            emailVerifiedAt: null,
+            createdAt: DateTime.now(),
+            updatedAt: null,
+          );
+          _authStateController.add(_isAuthenticated);
+          _userController.add(_currentUser);
+          
+          return AuthResult.success('Member registration successful');
+        } else {
+          return AuthResult.failure(result.message, result.errors);
+        }
+      } else {
+        // Handle validation errors properly
+        if (response.hasErrors) {
+          print('❌ Registration failed with validation errors: ${response.errorMessages.join(', ')}');
+          return AuthResult.failure('Registration failed', response.errorMessages);
+        } else {
+          print('❌ Registration failed: ${response.message}');
+          return AuthResult.failure(response.message, [response.message]);
+        }
+      }
+    } catch (e) {
+      print('💥 Registration exception: $e');
+      return AuthResult.failure('Member registration failed', [e.toString()]);
+    }
+  }
+
+  /// Login member with identifier (National ID or E-Kanisa number)
+  Future<AuthResult> memberLogin({
+    required String identifier,
+    required String password,
+  }) async {
+    try {
+      final response = await ApiService.memberLogin(
+        identifier: identifier,
+        password: password,
+      );
+
+      if (response.isSuccess && response.data != null) {
+        // Handle the consistent backend response format
+        final data = response.data['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          // Extract auth data from consistent response format
+          final token = data['access_token'] as String?;
+          final userData = data['user'] as Map<String, dynamic>?;
+          final dashboardRoute = data['dashboard_route'] as String?;
+          
+          if (token != null && userData != null) {
+            print('✅ Member login successful - Token: ${token.substring(0, 20)}..., Route: $dashboardRoute');
+            
+            // Save the access token
+            await TokenManager.saveToken(token);
+            
+            // Parse and set user data
+            _currentUser = User.fromJson(userData);
+            _isAuthenticated = true;
+            
+            // Notify listeners immediately
+            _authStateController.add(_isAuthenticated);
+            _userController.add(_currentUser);
+            
+            // Load additional profile data in background
+            _loadMemberUserData().then((_) {
+              print('✅ Background member data loaded');
+            }).catchError((error) {
+              print('⚠️ Background load failed but auth is set: $error');
+            });
+            
+            return AuthResult.success('Member login successful');
+          }
+        }
+        
+        // Fallback to old format if new format not found
+        print('⚠️ Using fallback login handling');
+        final memberService = MemberService();
+        final result = await memberService.login(
+          identifier: identifier,
+          password: password,
+        );
+
+        if (result.success) {
+          // Load user data after successful member login
+          await _loadMemberUserData();
+          return AuthResult.success('Member login successful');
+        } else {
+          return AuthResult.failure(result.message, result.errors);
+        }
+      } else {
+        return AuthResult.failure(response.message, response.errorMessages);
+      }
+    } catch (e) {
+      print('💥 Member login exception: $e');
+      return AuthResult.failure('Member login failed', [e.toString()]);
     }
   }
 
@@ -248,6 +451,57 @@ class AuthService {
       }
     } catch (e) {
       print('Load user data error: $e');
+      await _clearAuthState();
+    }
+  }
+
+  /// Load member user data from API (for member-specific authentication)
+  Future<void> _loadMemberUserData() async {
+    try {
+      // For members, we'll try to get user info from stored token data first
+      final hasValidToken = await TokenManager.hasValidToken();
+      
+      if (hasValidToken) {
+        // Try to get basic user info
+        final userResponse = await ApiService.getUser();
+        
+        if (userResponse.isSuccess && userResponse.data != null) {
+          try {
+            _currentUser = User.fromJson(userResponse.data['user']);
+            
+            // For members, ensure the role is set to 'member' if not already set
+            if (_currentUser!.role.isEmpty || _currentUser!.role == 'user') {
+              _currentUser = User(
+                id: _currentUser!.id,
+                name: _currentUser!.name,
+                email: _currentUser!.email,
+                role: 'member',
+                roleDisplay: 'Member',
+                dashboardRoute: '/member/dashboard',
+                emailVerifiedAt: _currentUser!.emailVerifiedAt,
+                createdAt: _currentUser!.createdAt,
+                updatedAt: _currentUser!.updatedAt,
+              );
+            }
+            
+            _isAuthenticated = true;
+            
+            // Notify listeners
+            _authStateController.add(_isAuthenticated);
+            _userController.add(_currentUser);
+            
+            // Load profile data
+            await loadProfile();
+          } catch (parseError) {
+            await _clearAuthState();
+          }
+        } else {
+          await _clearAuthState();
+        }
+      } else {
+        await _clearAuthState();
+      }
+    } catch (e) {
       await _clearAuthState();
     }
   }
