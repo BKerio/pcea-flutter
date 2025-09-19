@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../models/member.dart';
 import '../models/location.dart';
+import '../config/api_config.dart';
 import '../dashboards/member_dashboard.dart';
 
 class MemberRegistrationScreen extends StatefulWidget {
@@ -67,6 +69,9 @@ class _MemberRegistrationScreenState extends State<MemberRegistrationScreen> {
   void initState() {
     super.initState();
     _loadLocationData();
+    
+    // Debug: Print initial state
+    print('🎯 MemberRegistrationScreen initialized');
   }
 
   @override
@@ -88,22 +93,55 @@ class _MemberRegistrationScreenState extends State<MemberRegistrationScreen> {
   /// Load location data
   Future<void> _loadLocationData() async {
     try {
+      print('📍 Loading location data...');
+      print('📍 API Base URL: ${ApiConfig.currentUrl}');
+      
       _counties = await _locationService.getCounties();
+      print('📍 Successfully loaded ${_counties.length} counties');
+      print('📍 Counties: ${_counties.map((c) => c.countyName).take(3).join(", ")}...');
+      
       setState(() {});
     } catch (e) {
-      print('Error loading counties: $e');
+      print('❌ Error loading counties: $e');
+      
+      // Show error message to user
+      setState(() {
+        _errorMessage = 'Failed to load location data. Please check your connection.';
+      });
+      
+      // Show debug information
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Counties loading failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 
   /// Load constituencies when county is selected
   Future<void> _loadConstituencies(County county) async {
     try {
+      print('🏘️ Loading constituencies for ${county.countyName}...');
+      
       _constituencies = await _locationService.getConstituencies(county.id);
+      print('🏘️ Successfully loaded ${_constituencies.length} constituencies');
+      
       setState(() {
         _selectedConstituency = null; // Reset constituency selection
       });
     } catch (e) {
-      print('Error loading constituencies: $e');
+      print('❌ Error loading constituencies: $e');
+      
+      // Show error message to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Constituencies loading failed for ${county.countyName}: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -572,13 +610,13 @@ class _MemberRegistrationScreenState extends State<MemberRegistrationScreen> {
               prefixIcon: Icon(Icons.location_on),
               border: OutlineInputBorder(),
             ),
-            items: _counties.map((county) {
+            items: _counties.isEmpty ? [] : _counties.map((county) {
               return DropdownMenuItem(
                 value: county,
                 child: Text(county.countyName),
               );
             }).toList(),
-            onChanged: (county) {
+            onChanged: _counties.isEmpty ? null : (county) {
               setState(() {
                 _selectedCounty = county;
                 if (county != null) {
@@ -586,6 +624,20 @@ class _MemberRegistrationScreenState extends State<MemberRegistrationScreen> {
                 }
               });
             },
+            hint: _counties.isEmpty 
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Loading counties...'),
+                    ],
+                  )
+                : const Text('Select your county'),
           ),
           const SizedBox(height: 16),
 
@@ -597,17 +649,33 @@ class _MemberRegistrationScreenState extends State<MemberRegistrationScreen> {
               prefixIcon: Icon(Icons.location_city),
               border: OutlineInputBorder(),
             ),
-            items: _constituencies.map((constituency) {
+            items: _constituencies.isEmpty ? [] : _constituencies.map((constituency) {
               return DropdownMenuItem(
                 value: constituency,
                 child: Text(constituency.constituencyName),
               );
             }).toList(),
-            onChanged: (constituency) {
+            onChanged: _constituencies.isEmpty ? null : (constituency) {
               setState(() {
                 _selectedConstituency = constituency;
               });
             },
+            hint: _selectedCounty == null
+                ? const Text('Select a county first')
+                : _constituencies.isEmpty
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 8),
+                          Text('Loading constituencies...'),
+                        ],
+                      )
+                    : const Text('Select your constituency'),
           ),
           const SizedBox(height: 16),
 

@@ -661,13 +661,19 @@ class ApiService {
   /// Get all counties
   static Future<ApiResponse> getCounties() async {
     try {
+      print('🌐 Making API request to: ${ApiConfig.currentUrl}/counties');
+      
       final response = await _makeRequest(
         'GET',
         '/counties',
       );
 
+      print('🌐 Counties API Response - Status: ${response.statusCode}');
+      print('🌐 Counties API Response - Body: ${response.body}');
+
       return ApiResponse.fromResponse(response);
     } catch (e) {
+      print('❌ Counties API Error: $e');
       return ApiResponse.error('Failed to get counties: ${e.toString()}');
     }
   }
@@ -675,13 +681,19 @@ class ApiService {
   /// Get constituencies for a county
   static Future<ApiResponse> getConstituencies(int countyId) async {
     try {
+      print('🏘️ Making API request to: ${ApiConfig.currentUrl}/constituencies?county_id=$countyId');
+      
       final response = await _makeRequest(
         'GET',
         '/constituencies?county_id=$countyId',
       );
 
+      print('🏘️ Constituencies API Response - Status: ${response.statusCode}');
+      print('🏘️ Constituencies API Response - Body: ${response.body}');
+
       return ApiResponse.fromResponse(response);
     } catch (e) {
+      print('❌ Constituencies API Error: $e');
       return ApiResponse.error('Failed to get constituencies: ${e.toString()}');
     }
   }
