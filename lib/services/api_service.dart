@@ -426,18 +426,55 @@ class ApiService {
       print('🆔 National ID: $nationalId');
       print('👤 Full Name: $fullName');
       
-      final requestBody = {
+      final requestBody = <String, dynamic>{
+        'name': fullName,
         'full_name': fullName,
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
+        'date_of_birth': dateOfBirth.toIso8601String().split('T')[0], // Format as YYYY-MM-DD
+        'gender': gender,
+        'marital_status': maritalStatus,
+        'presbytery': presbytery,
+        'parish': parish,
+        'congregation': congregation,
+        'is_baptized': isBaptized,
+        'takes_holy_communion': takesHolyCommunion,
       };
       
+      // Add optional fields if they are not null or empty
+      if (nationalId != null && nationalId.trim().isNotEmpty) {
+        requestBody['national_id'] = nationalId;
+      }
+      if (primarySchool != null && primarySchool.trim().isNotEmpty) {
+        requestBody['primary_school'] = primarySchool;
+      }
+      if (telephone != null && telephone.trim().isNotEmpty) {
+        requestBody['telephone'] = telephone;
+      }
+      if (locationCounty != null && locationCounty.trim().isNotEmpty) {
+        requestBody['location_county'] = locationCounty;
+      }
+      if (locationSubcounty != null && locationSubcounty.trim().isNotEmpty) {
+        requestBody['location_subcounty'] = locationSubcounty;
+      }
+      if (dependencies != null && dependencies.isNotEmpty) {
+        requestBody['dependencies'] = dependencies;
+      }
+      
       print('📦 Request Body: $requestBody');
+      print('📦 Additional fields to be sent in profile update:');
+      print('   - Date of Birth: ${dateOfBirth.toIso8601String().split('T')[0]}');
+      print('   - National ID: $nationalId');
+      print('   - Gender: $gender');
+      print('   - Marital Status: $maritalStatus');
+      print('   - Presbytery: $presbytery');
+      print('   - Parish: $parish');
+      print('   - Congregation: $congregation');
       
       final response = await _makeRequest(
         'POST',
-        '/register',
+        '/member/register',
         body: requestBody,
       );
 
@@ -450,12 +487,16 @@ class ApiService {
       // If registration is successful, save the token and user data
       if (apiResponse.isSuccess && apiResponse.data != null) {
         final data = apiResponse.data;
+        String? accessToken;
+        
         if (data['access_token'] != null) {
-          await TokenManager.saveToken(data['access_token']);
+          accessToken = data['access_token'] as String;
+          await TokenManager.saveToken(accessToken);
           print('💾 Token saved successfully');
         } else if (data['data'] != null && data['data']['access_token'] != null) {
           // Handle nested data structure
-          await TokenManager.saveToken(data['data']['access_token']);
+          accessToken = data['data']['access_token'] as String;
+          await TokenManager.saveToken(accessToken);
           print('💾 Token saved successfully (nested structure)');
         }
         
@@ -470,7 +511,7 @@ class ApiService {
             // Extract only User-relevant fields from member registration response
             final userFields = {
               'id': userData['id'],
-              'name': userData['full_name'],
+              'name': userData['name'] ?? userData['full_name'] ?? fullName,
               'email': userData['email'],
               'role': userData['role'] ?? 'member',
               'role_display': 'Member',
@@ -548,7 +589,7 @@ class ApiService {
     try {
       final response = await _makeRequest(
         'GET',
-        '/member/profile',
+        '/api/profile',
         requiresAuth: true,
       );
 
@@ -563,7 +604,7 @@ class ApiService {
     try {
       final response = await _makeRequest(
         'PUT',
-        '/member/profile',
+        '/api/profile',
         body: data,
         requiresAuth: true,
       );
