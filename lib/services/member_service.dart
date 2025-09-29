@@ -142,19 +142,39 @@ class MemberService {
   /// Get member dependents
   Future<DependentsResult> getDependents() async {
     try {
+      print('🔍 MemberService: Calling getMemberDependents API...');
       final response = await ApiService.getMemberDependents();
       
+      print('📡 API Response received:');
+      print('   Success: ${response.isSuccess}');
+      print('   Data: ${response.data}');
+      print('   Message: ${response.message}');
+      
       if (response.isSuccess && response.data != null) {
-        final dependentsData = response.data['dependents'] as List<dynamic>;
-        final dependents = dependentsData
-            .map((dep) => Dependent.fromJson(dep as Map<String, dynamic>))
-            .toList();
-        
-        return DependentsResult.success('Dependents loaded successfully', dependents);
+        if (response.data.containsKey('dependents')) {
+          final dependentsData = response.data['dependents'] as List<dynamic>;
+          print('📋 Dependents raw data: $dependentsData');
+          
+          final dependents = dependentsData
+              .map((dep) {
+                print('🔄 Parsing dependent: $dep');
+                return Dependent.fromJson(dep as Map<String, dynamic>);
+              })
+              .toList();
+          
+          print('✅ Successfully parsed ${dependents.length} dependents');
+          return DependentsResult.success('Dependents loaded successfully', dependents);
+        } else {
+          print('⚠️ No dependents key in response data');
+          return DependentsResult.success('No dependents found', []);
+        }
       } else {
+        print('❌ API call failed: ${response.message}');
         return DependentsResult.failure(response.message, response.errorMessages);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('💥 Exception in getDependents: $e');
+      print('📚 Stack trace: $stackTrace');
       return DependentsResult.failure('Failed to load dependents', [e.toString()]);
     }
   }

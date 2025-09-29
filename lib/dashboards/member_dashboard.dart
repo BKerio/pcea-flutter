@@ -41,11 +41,18 @@ class _MemberDashboardState extends State<MemberDashboard> {
       }
 
       // Load dependents
+      print('🏠 MemberDashboard: Loading dependents...');
       final dependentsResult = await _memberService.getDependents();
+      print('🏠 Dependents result success: ${dependentsResult.success}');
+      print('🏠 Dependents count: ${dependentsResult.dependents?.length ?? 0}');
+      
       if (dependentsResult.success && dependentsResult.dependents != null) {
         setState(() {
           _dependents = dependentsResult.dependents!;
         });
+        print('🏠 Dependents loaded in state: ${_dependents.length}');
+      } else {
+        print('🏠 Failed to load dependents: ${dependentsResult.message}');
       }
     } catch (e) {
       print('Error loading member data: $e');
